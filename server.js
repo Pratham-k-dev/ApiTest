@@ -5,11 +5,11 @@ const app = express();
 app.use(express.json());
 
 
+/* ---------------- ADD SCHOOL ---------------- */
 app.post("/addSchool", async (req, res) => {
   try {
     const { name, address, latitude, longitude } = req.body;
 
-    
     if (!name || !address || latitude == null || longitude == null) {
       return res.status(400).json({
         success: false,
@@ -24,8 +24,8 @@ app.post("/addSchool", async (req, res) => {
       });
     }
 
-    await db.execute(
-      "INSERT INTO schools (name, address, latitude, longitude) VALUES (?, ?, ?, ?)",
+    await db.query(
+      "INSERT INTO schools (name, address, latitude, longitude) VALUES ($1, $2, $3, $4)",
       [name, address, latitude, longitude]
     );
 
@@ -44,7 +44,7 @@ app.post("/addSchool", async (req, res) => {
 });
 
 
-
+/* ---------------- LIST SCHOOLS ---------------- */
 app.get("/listSchools", async (req, res) => {
   try {
     const userLat = parseFloat(req.query.latitude);
@@ -57,11 +57,11 @@ app.get("/listSchools", async (req, res) => {
       });
     }
 
-    const [schools] = await db.execute("SELECT * FROM schools");
+    const result = await db.query("SELECT * FROM schools");
+    const schools = result.rows;
 
-    // Haversine formula
     const getDistance = (lat1, lon1, lat2, lon2) => {
-      const R = 6371; // km
+      const R = 6371;
       const toRad = (val) => (val * Math.PI) / 180;
 
       const dLat = toRad(lat2 - lat1);
@@ -105,7 +105,8 @@ app.get("/listSchools", async (req, res) => {
 
 
 /* ---------------- START SERVER ---------------- */
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
+
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
